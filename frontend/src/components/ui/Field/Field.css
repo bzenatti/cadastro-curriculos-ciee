@@ -1,14 +1,16 @@
 .field { display: flex; flex-direction: column; gap: var(--space-xs); }
 .field label { font-weight: var(--font-weight-strong); color: var(--color-primary); }
 
-.field input {
+.field :is(input, textarea) {
   padding: var(--space-sm) var(--space-md);
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
 }
 
-.field input:focus-visible { border-color: var(--color-primary); }
-.field input[aria-invalid='true'] {
+.field textarea { min-height: 6rem; resize: vertical; }
+
+.field :is(input, textarea):focus-visible { border-color: var(--color-primary); }
+.field :is(input, textarea)[aria-invalid='true'] {
   --focus-color: var(--color-danger);
   border-color: var(--color-danger);
 }

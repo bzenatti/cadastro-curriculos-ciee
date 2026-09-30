@@ -26,4 +26,14 @@ describe('Field', () => {
     expect(input).toBeInvalid()
     expect(input).toHaveAccessibleDescription('E-mail inválido')
   })
+  
+  it('com multiline, usa um textarea com o mesmo vínculo de label e erro', () => {
+    render(<Field label="Resumo profissional" multiline error="Texto muito longo" />)
+
+    const textarea = screen.getByLabelText('Resumo profissional')
+
+    expect(textarea).toBeInstanceOf(HTMLTextAreaElement)
+    expect(textarea).toBeInvalid()
+    expect(textarea).toHaveAccessibleDescription('Texto muito longo')
+  })
 })

@@ -30,6 +30,8 @@ function Playground() {
           <Field label="Nome completo" placeholder="Maria da Silva" />
           <Field label="E-mail" type="email" defaultValue="maria@" error="E-mail inválido" />
           <Field label="Telefone" placeholder="(DDD) 99876-5432" disabled />
+          <Field label="Resumo profissional" multiline placeholder="Conte sua experiência" />
+
         </div>
       </section>
       <section>
