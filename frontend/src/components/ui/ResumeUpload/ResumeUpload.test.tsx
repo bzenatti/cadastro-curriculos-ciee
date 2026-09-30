@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import { ResumeUpload } from './ResumeUpload'
@@ -9,6 +9,9 @@ const user = userEvent.setup({ applyAccept: false })
 
 const makePdf = () => new File(['%PDF-1.4'], 'cv.pdf', { type: 'application/pdf' })
 const getInput = () => screen.getByLabelText('Arquivo PDF do currículo')
+const dropOnArea = (file: File) =>
+  fireEvent.drop(screen.getByText(/Arraste o currículo/), { dataTransfer: { files: [file] } })
+
 
 describe('ResumeUpload', () => {
   it('com um PDF válido, mostra o nome e entrega o arquivo para onSelect', async () => {
@@ -61,5 +64,26 @@ describe('ResumeUpload', () => {
     await user.upload(getInput(), new File(['texto'], 'notas.txt', { type: 'text/plain' }))
 
     expect(screen.queryByText(/Arquivo selecionado/)).not.toBeInTheDocument()
+  })
+
+  it('soltar um PDF válido mostra o nome e entrega o arquivo para onSelect', () => {
+    const onSelect = vi.fn()
+    render(<ResumeUpload onSelect={onSelect} />)
+    const pdf = makePdf()
+
+    dropOnArea(pdf)
+
+    expect(onSelect).toHaveBeenCalledWith(pdf)
+    expect(screen.getByText('Arquivo selecionado: cv.pdf')).toBeInTheDocument()
+  })
+
+  it('soltar um arquivo inválido mostra o erro e não chama onSelect', () => {
+    const onSelect = vi.fn()
+    render(<ResumeUpload onSelect={onSelect} />)
+
+    dropOnArea(new File(['texto'], 'notas.txt', { type: 'text/plain' }))
+
+    expect(screen.getByRole('alert')).toHaveTextContent('O arquivo precisa ser um PDF.')
+    expect(onSelect).not.toHaveBeenCalled()
   })
 })

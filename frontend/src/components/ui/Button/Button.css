@@ -2,14 +2,11 @@
   padding: var(--space-sm) var(--space-lg);
   border: 0;
   border-radius: var(--radius);
-  font: inherit;
-  font-weight: 600;
+  font-weight: var(--font-weight-strong);
   color: #fff;
-  cursor: pointer;
 }
 
 .btn--primary { background: var(--color-primary); }
-.btn--secondary { background: var(--color-secondary); }
+.btn--secondary { background: var(--color-secondary); color: var(--color-text); }
 
-.btn:hover:not(:disabled) { filter: brightness(0.9); }
-.btn:disabled { opacity: 0.6; cursor: not-allowed; }
+.btn:hover:not(:disabled) { filter: var(--hover-darken); }

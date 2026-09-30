@@ -8,7 +8,13 @@
   padding: var(--space-lg);
   border: 2px dashed var(--color-secondary);
   border-radius: var(--radius);
+  background: color-mix(in srgb, var(--color-secondary) 6%, white);
   text-align: center;
+}
+
+.resume-upload_area--dragging {
+  border-color: var(--color-primary);
+  background: color-mix(in srgb, var(--color-primary) 10%, white);
 }
 
 .resume-upload_link {
@@ -16,13 +22,12 @@
   border: 0;
   border-radius: var(--radius);
   background: none;
-  font: inherit;
-  font-weight: 600;
+  font-weight: var(--font-weight-strong);
   color: var(--color-primary);
   text-decoration: underline;
-  cursor: pointer;
 }
 
-.resume-upload_link:hover { filter: brightness(0.8); }
+.resume-upload_link:hover { filter: var(--hover-darken); }
 
+.resume-upload_text,
 .resume-upload_file { margin: 0; }

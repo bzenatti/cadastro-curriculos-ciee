@@ -1,8 +1,11 @@
 :root {
-  --color-primary: #2563eb;
-  --color-secondary: #6b7280;
+  --color-primary: #03428b;
+  --color-secondary: #ec6c06;
   --color-success: #15803d;
   --color-danger: #dc2626;
+
+  --color-text: #0f1f3d;
+  --color-border: #64748b;
 
   --radius: 6px;
 
@@ -10,9 +13,50 @@
   --space-sm: 0.5rem;
   --space-md: 0.75rem;
   --space-lg: 1rem;
+
+  --font-weight-strong: 600;
+  --hover-darken: brightness(0.9);
+}
+
+body {
+  color: var(--color-text);
+  font-family: system-ui, sans-serif;
+  line-height: 1.5;
+}
+
+h1,
+h2 {
+  color: var(--color-primary);
+}
+
+h1::after {
+  content: '';
+  display: block;
+  width: 3rem;
+  height: 4px;
+  margin-top: var(--space-sm);
+  border-radius: var(--radius);
+  background: var(--color-secondary);
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+button { cursor: pointer; }
+
+button:disabled,
+input:disabled,
+textarea:disabled,
+select:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 :focus-visible {
   outline: 2px solid transparent;
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus-color, var(--color-primary)) 25%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus-color, var(--color-secondary)) 50%, transparent);
 }

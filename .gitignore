@@ -481,3 +481,6 @@ $RECYCLE.BIN/
 # Vim temporary swap files
 *.swp
 .env
+
+# Configuração local do editor (cópia guardada no repo ciee-desafio-config)
+.editorconfig

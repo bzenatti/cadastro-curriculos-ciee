@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react'
-import type { ChangeEvent } from 'react'
+import type { ChangeEvent, DragEvent } from 'react'
 import { Alert } from '../Alert/Alert'
 import './ResumeUpload.css'
 
@@ -21,6 +21,8 @@ export function ResumeUpload({ onSelect }: ResumeUploadProps) {
   const inputRef = useRef<HTMLInputElement>(null)
   const [file, setFile] = useState<File | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [isDragging, setIsDragging] = useState(false)
+
 
   function handleFile(newFile: File | undefined) {
     if (!newFile) return
@@ -37,9 +39,31 @@ export function ResumeUpload({ onSelect }: ResumeUploadProps) {
     event.target.value = ''
   }
 
+  function handleDragOver(event: DragEvent<HTMLDivElement>) {
+    event.preventDefault()
+    setIsDragging(true)
+  }
+
+  function handleDragLeave(event: DragEvent<HTMLDivElement>) {
+    if (event.currentTarget.contains(event.relatedTarget as Node | null)) return
+    setIsDragging(false)
+  }
+
+  function handleDrop(event: DragEvent<HTMLDivElement>) {
+    event.preventDefault()
+    setIsDragging(false)
+    handleFile(event.dataTransfer.files[0])
+  }
+
+
   return (
     <div className="resume-upload">
-      <div className="resume-upload_area">
+      <div
+        className={`resume-upload_area${isDragging ? ' resume-upload_area--dragging' : ''}`}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+      >
         <input
           ref={inputRef}
           type="file"
@@ -48,9 +72,12 @@ export function ResumeUpload({ onSelect }: ResumeUploadProps) {
           hidden
           onChange={handleChange}
         />
-        <button type="button" className="resume-upload_link" onClick={() => inputRef.current?.click()}>
-          Escolher o arquivo
-        </button>
+        <p className="resume-upload_text">
+          Arraste o currículo em PDF para cá ou{' '}
+          <button type="button" className="resume-upload_link" onClick={() => inputRef.current?.click()}>
+            escolha o arquivo
+          </button>
+        </p>
         {file && <p className="resume-upload_file">Arquivo selecionado: {file.name}</p>}
       </div>
       {error && <Alert variant="error">{error}</Alert>}
