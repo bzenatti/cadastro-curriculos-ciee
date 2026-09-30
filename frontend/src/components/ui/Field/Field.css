@@ -1,0 +1,19 @@
+.field { display: flex; flex-direction: column; gap: var(--space-xs); }
+.field label { font-weight: 600; }
+
+.field input {
+  padding: var(--space-sm) var(--space-md);
+  border: 1px solid var(--color-secondary);
+  border-radius: var(--radius);
+  font: inherit;
+}
+
+.field input:focus-visible { border-color: var(--color-primary); }
+.field input[aria-invalid='true'] {
+  --focus-color: var(--color-danger);
+  border-color: var(--color-danger);
+}
+.field input:disabled { opacity: 0.6; cursor: not-allowed; }
+
+
+.field_error { color: var(--color-danger); font-size: 0.875rem; }
