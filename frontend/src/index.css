@@ -1,4 +1,17 @@
 :root {
   --color-primary: #2563eb;
   --color-secondary: #6b7280;
+  --color-danger: #dc2626;
+
+  --radius: 6px;
+
+  --space-xs: 0.25rem;
+  --space-sm: 0.5rem;
+  --space-md: 0.75rem;
+  --space-lg: 1rem;
+}
+
+:focus-visible {
+  outline: 2px solid transparent;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus-color, var(--color-primary)) 25%, transparent);
 }

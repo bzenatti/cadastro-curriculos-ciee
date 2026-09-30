@@ -1,7 +1,7 @@
 .btn {
-  padding: 0.6rem 1.2rem;
+  padding: var(--space-sm) var(--space-lg);
   border: 0;
-  border-radius: 6px;
+  border-radius: var(--radius);
   font: inherit;
   font-weight: 600;
   color: #fff;
@@ -12,5 +12,4 @@
 .btn--secondary { background: var(--color-secondary); }
 
 .btn:hover:not(:disabled) { filter: brightness(0.9); }
-.btn:focus-visible { outline: 3px solid var(--color-primary); outline-offset: 2px; }
 .btn:disabled { opacity: 0.6; cursor: not-allowed; }
