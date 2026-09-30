@@ -5,6 +5,7 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 import { Button } from './components/ui/Button/Button'
 import { Field } from './components/ui/Field/Field'
+import { Alert } from './components/ui/Alert/Alert'
 
 // eslint-disable-next-line react-refresh/only-export-components
 function Playground() {
@@ -29,6 +30,15 @@ function Playground() {
           <Field label="Telefone" placeholder="(DDD) 99876-5432" disabled />
         </div>
       </section>
+      <section>
+        <h2>Alert</h2>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, maxWidth: 360 }}>
+          <Alert variant="success">Candidato cadastrado com sucesso.</Alert>
+          <Alert variant="error">Este e-mail já está cadastrado.</Alert>
+          <Alert>Não encontrei o telefone no PDF. Preencha manualmente.</Alert>
+        </div>
+      </section>
+
     </main>
   )
 }
