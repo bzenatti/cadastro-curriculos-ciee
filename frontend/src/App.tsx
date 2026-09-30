@@ -1,7 +1,10 @@
+import { NewCandidatePage } from './pages/NewCandidatePage/NewCandidatePage'
+import './App.css'
+
 export default function App() {
   return (
-    <main>
-      <h1>Cadastro de candidatos</h1>
+    <main className="app">
+      <NewCandidatePage />
     </main>
   )
 }

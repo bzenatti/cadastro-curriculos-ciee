@@ -6,6 +6,8 @@
 
   --color-text: #0f1f3d;
   --color-border: #64748b;
+  --color-bg: color-mix(in srgb, var(--color-primary) 8%, white);
+  --color-surface: #fff;
 
   --radius: 6px;
 
@@ -13,6 +15,7 @@
   --space-sm: 0.5rem;
   --space-md: 0.75rem;
   --space-lg: 1rem;
+  --space-xl: 2rem;
 
   --font-weight-strong: 600;
   --hover-darken: brightness(0.9);
@@ -22,6 +25,7 @@ body {
   color: var(--color-text);
   font-family: system-ui, sans-serif;
   line-height: 1.5;
+  background: var(--color-bg);
 }
 
 h1,

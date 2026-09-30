@@ -1,0 +1,13 @@
+.app {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+  max-width: 40rem;
+  margin: var(--space-xl) auto;
+  padding: var(--space-xl);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  box-shadow: 0 2px 12px color-mix(in srgb, var(--color-primary) 15%, transparent);
+}
+
+.app :is(h1, h2) { margin: 0; }
