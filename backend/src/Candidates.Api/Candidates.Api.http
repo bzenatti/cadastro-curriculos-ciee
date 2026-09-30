@@ -1,6 +1,6 @@
 @Candidates.Api_HostAddress = http://localhost:5206
 
-GET {{Candidates.Api_HostAddress}}/weatherforecast/
+GET {{Candidates.Api_HostAddress}}/openapi/v1.json
 Accept: application/json
 
 ###
