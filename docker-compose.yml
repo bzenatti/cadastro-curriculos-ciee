@@ -5,7 +5,7 @@ services:
       ACCEPT_EULA: "Y"
       MSSQL_SA_PASSWORD: ${DB_PASSWORD:?Crie o .env a partir do .env.example}
     ports:
-      - "1433:1433"
+      - "1434:1433" # 1434 no host
     volumes:
       - sqldata:/var/opt/mssql
     healthcheck:
