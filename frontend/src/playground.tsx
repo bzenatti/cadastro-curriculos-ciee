@@ -1,14 +1,16 @@
 // Página só de desenvolvimento para ver cada componente isolado.
 // Com `npm run dev`, abra http://localhost:5173/playground.html (não entra no build).
-import { StrictMode } from 'react'
+import { StrictMode, useState } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import { Button } from './components/ui/Button/Button'
 import { Field } from './components/ui/Field/Field'
 import { Alert } from './components/ui/Alert/Alert'
+import { ResumeUpload } from './components/ui/ResumeUpload/ResumeUpload'
 
 // eslint-disable-next-line react-refresh/only-export-components
 function Playground() {
+  const [received, setReceived] = useState<string[]>([])
   return (
     <main style={{ padding: 24 }}>
       <h1>Playground de componentes</h1>
@@ -38,6 +40,14 @@ function Playground() {
           <Alert>Não encontrei o telefone no PDF. Preencha manualmente.</Alert>
         </div>
       </section>
+      <section>
+        <h2>ResumeUpload</h2>
+        <div style={{ maxWidth: 360 }}>
+          <ResumeUpload onSelect={(file) => setReceived((prev) => [...prev, file.name])} />
+          <p>Recebido pelo onSelect: {received.length ? received.join(', ') : 'nada ainda'}</p>
+        </div>
+      </section>
+
 
     </main>
   )
