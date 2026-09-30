@@ -9,8 +9,12 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<Candidate>()
-            .HasIndex(c => c.Email)
-            .IsUnique();
+        var candidate = modelBuilder.Entity<Candidate>();
+
+        candidate.HasIndex(c => c.Email).IsUnique();
+
+        // O SQL Server não guarda se a data é UTC; ao ler, marca como UTC para o JSON sair com "Z".
+        candidate.Property(c => c.CreatedAt)
+            .HasConversion(v => v, v => DateTime.SpecifyKind(v, DateTimeKind.Utc));
     }
 }
