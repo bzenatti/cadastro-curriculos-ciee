@@ -67,6 +67,41 @@ Todas as rotas ficam sob `/api`, em JSON (campos em `camelCase`, datas em ISO 86
 
 **PDF.** O `parse` não grava nada, não guarda o arquivo e não registra o texto extraído. Só o `POST /api/candidates` grava.
 
+## Configuração
+
+A API lê a connection string da configuração `ConnectionStrings:Default`. O SQL Server roda em um container Docker.
+
+**1. Subir o banco**
+
+```bash
+cp .env.example .env       # senha de exemplo, só para o container local
+docker compose up -d db    # SQL Server na porta 1434 do seu computador
+docker compose ps          # aguarde o status "healthy"
+```
+
+**2. Informar a connection string à API**
+
+Para rodar a API fora do Docker (`dotnet run`, `dotnet ef`), guarde a string no `user-secrets`, que fica fora do repositório:
+
+```bash
+. ./.env
+dotnet user-secrets set "ConnectionStrings:Default" "Server=localhost,1434;Database=CandidatesDb;User Id=sa;Password=$DB_PASSWORD;TrustServerCertificate=True" --project backend/src/Candidates.Api
+```
+
+O `user-secrets` vale só para o computador onde o comando foi executado. Em outra máquina, repita o passo 2.
+
+Formato da string, sem credencial real:
+
+```text
+Server=localhost,1434;Database=CandidatesDb;User Id=sa;Password=<senha do .env>;TrustServerCertificate=True
+```
+
+- `Server=localhost,1434`: endereço e porta (depois da **vírgula**) publicada pelo Docker.
+- `Database=CandidatesDb`: criado pelas migrations.
+- `TrustServerCertificate=True`: o container usa certificado autoassinado.
+- A senha do `sa` precisa ter 8+ caracteres, com maiúscula, minúscula e número ou símbolo (regra do SQL Server), e não pode conter `;`.
+- Se a porta 1434 estiver ocupada, troque o número da esquerda em `docker-compose.yml` e na string.
+
 
 ## O que este README deve conter
 

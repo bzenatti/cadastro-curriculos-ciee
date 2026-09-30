@@ -6,8 +6,8 @@ public class Candidate
 {
     public int Id { get; set; }
 
-    [MaxLength(CandidateLimits.FullName)]
-    public string FullName { get; set; } = string.Empty;
+    [MaxLength(CandidateLimits.Name)]
+    public string Name { get; set; } = string.Empty;
 
     [MaxLength(CandidateLimits.Email)]
     public string Email { get; set; } = string.Empty;
@@ -15,8 +15,8 @@ public class Candidate
     [MaxLength(CandidateLimits.Phone)]
     public string? Phone { get; set; }
 
-    [MaxLength(CandidateLimits.Role)]
-    public string? Role { get; set; }
+    [MaxLength(CandidateLimits.Position)]
+    public string? Position { get; set; }
 
     [MaxLength(CandidateLimits.Summary)]
     public string? Summary { get; set; }
