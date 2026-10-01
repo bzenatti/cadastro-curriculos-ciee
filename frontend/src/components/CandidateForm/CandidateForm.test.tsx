@@ -104,5 +104,17 @@ describe('CandidateForm', () => {
     )
     expect(screen.queryByText('Informe o nome completo.')).not.toBeInTheDocument()
   })
+  it('mostra embaixo do campo o erro que o onSubmit devolve (ex.: do servidor)', async () => {
+    const user = userEvent.setup()
+    const message = 'Já existe um candidato cadastrado com este e-mail.'
+    const onSubmit = vi.fn().mockResolvedValue({ email: message })
+    render(<CandidateForm onSubmit={onSubmit} />)
 
+    await user.type(screen.getByLabelText('Nome completo'), 'Maria da Silva')
+    await user.type(screen.getByLabelText('E-mail'), 'maria@exemplo.com')
+    await user.click(screen.getByRole('button', { name: 'Cadastrar' }))
+
+    expect(await screen.findByText(message)).toBeInTheDocument()
+    expect(screen.getByLabelText('E-mail')).toHaveAccessibleDescription(message)
+  })
 })

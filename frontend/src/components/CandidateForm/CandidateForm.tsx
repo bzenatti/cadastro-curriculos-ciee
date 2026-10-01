@@ -23,8 +23,8 @@ const EMPTY_VALUES: CandidateFormValues = {
 }
 
 type CandidateFormProps = {
-  // quem chama trata os erros da API; o formulário só espera terminar
-  onSubmit: (values: CandidateFormValues) => Promise<void>
+  // quem chama trata a API; pode devolver erros (ex.: do servidor) para o formulário mostrar embaixo dos campos
+  onSubmit: (values: CandidateFormValues) => Promise<CandidateErrors | void>
 }
 
 export function CandidateForm({ onSubmit }: CandidateFormProps) {
@@ -46,7 +46,8 @@ export function CandidateForm({ onSubmit }: CandidateFormProps) {
 
     setSubmitting(true)
     try {
-      await onSubmit(values)
+      const serverErrors = await onSubmit(values)
+      if (serverErrors) setErrors(serverErrors)
     } finally {
       setSubmitting(false)
     }
