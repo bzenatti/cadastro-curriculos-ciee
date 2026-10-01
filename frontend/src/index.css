@@ -10,6 +10,8 @@
   --color-surface: #fff;
 
   --radius: 6px;
+  --content-width: 40rem;
+
 
   --space-xs: 0.25rem;
   --space-sm: 0.5rem;
@@ -22,6 +24,7 @@
 }
 
 body {
+  margin: 0;
   color: var(--color-text);
   font-family: system-ui, sans-serif;
   line-height: 1.5;
@@ -42,6 +45,8 @@ h1::after {
   border-radius: var(--radius);
   background: var(--color-secondary);
 }
+
+a { color: var(--color-primary); }
 
 button,
 input,

@@ -4,7 +4,6 @@ import { CandidateDetailsPage } from './pages/CandidateDetailsPage/CandidateDeta
 import { CandidateListPage } from './pages/CandidateListPage/CandidateListPage'
 import { NewCandidatePage } from './pages/NewCandidatePage/NewCandidatePage'
 import { NotFoundPage } from './pages/NotFoundPage/NotFoundPage'
-import './App.css'
 
 export default function App() {
   return (
