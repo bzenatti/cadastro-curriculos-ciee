@@ -31,3 +31,7 @@ export function createCandidate(values: CandidateFormValues): Promise<Candidate>
 export function listCandidates(page: number): Promise<Page<CandidateListItem>> {
   return request<Page<CandidateListItem>>(`/api/candidates?page=${page}`)
 }
+
+export function getCandidate(id: string): Promise<Candidate> {
+  return request<Candidate>(`/api/candidates/${encodeURIComponent(id)}`)
+}

@@ -6,6 +6,7 @@ import { ApiError } from '../../api/http'
 import { Alert } from '../../components/ui/Alert/Alert'
 import { Button } from '../../components/ui/Button/Button'
 import { Pagination } from '../../components/ui/Pagination/Pagination'
+import { formatDate } from '../../format/formatDate'
 import './CandidateListPage.css'
 
 type ListState =
@@ -83,7 +84,7 @@ function CandidateList({ page, onPageChange, onRetry }: CandidateListProps) {
                 <td><Link to={`/candidatos/${candidate.id}`}>{candidate.name}</Link></td>
                 <td>{candidate.email}</td>
                 <td>{candidate.position ?? 'Não informado'}</td>
-                <td className="candidate-list_date">{new Date(candidate.createdAt).toLocaleDateString('pt-BR')}</td>
+                <td className="candidate-list_date">{formatDate(candidate.createdAt)}</td>
               </tr>
             ))}
           </tbody>

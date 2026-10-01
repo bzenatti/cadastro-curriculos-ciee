@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import App from './App'
-import { listCandidates } from './api/candidates'
+import { getCandidate, listCandidates } from './api/candidates'
 
 vi.mock('./api/candidates')
 
@@ -17,7 +17,21 @@ function renderAt(path: string) {
 
 describe('App', () => {
   beforeEach(() => {
-    vi.mocked(listCandidates).mockResolvedValue({ items: [], page: 1, pageSize: 10, totalCount: 0 })
+    vi.mocked(listCandidates).mockResolvedValue({
+      items: [],
+      page: 1,
+      pageSize: 10,
+      totalCount: 0
+    })
+    vi.mocked(getCandidate).mockResolvedValue({
+      id: 42,
+      name: 'Maria Silva',
+      email: 'maria@exemplo.com',
+      phone: null,
+      position: null,
+      summary: null,
+      createdAt: '2026-10-01T12:00:00Z',
+    })
   })
 
   it('mostra a lista de candidatos na raiz', async () => {
@@ -34,10 +48,11 @@ describe('App', () => {
     expect(screen.getByLabelText('Nome completo')).toBeInTheDocument()
   })
 
-  it('mostra os detalhes do candidato indicado no endereço', () => {
+  it('mostra os detalhes do candidato indicado no endereço', async () => {
     renderAt('/candidatos/42')
 
-    expect(screen.getByRole('heading', { name: 'Candidato 42' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Maria Silva' })).toBeInTheDocument()
+    expect(getCandidate).toHaveBeenCalledWith('42')
   })
 
   it('mostra "página não encontrada" em um endereço desconhecido, mantendo o menu', () => {

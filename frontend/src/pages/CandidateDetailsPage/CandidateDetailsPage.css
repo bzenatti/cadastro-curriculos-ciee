@@ -1,0 +1,51 @@
+/* O cartão do layout fica mais estreito só nesta página; a lista precisa da largura maior por causa da tabela. */
+.layout_content:has(> .candidate-details) {
+  max-width: var(--content-width-narrow);
+}
+
+.candidate-details {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+}
+
+.candidate-details h1 {
+  text-align: center;
+}
+
+.candidate-details h1::after {
+  margin-inline: auto;
+}
+
+/* Encolhe até o conteúdo e se centraliza; título e ficha esticam até a largura dele. */
+.candidate-details_profile {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+  margin: 0 auto;
+}
+
+.candidate-details_profile h1::after {
+  width: 100%;
+}
+
+.candidate-details_list {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: var(--space-sm) var(--space-xl);
+  margin: 0;
+}
+
+.candidate-details_list dt {
+  color: var(--color-primary);
+  font-weight: var(--font-weight-strong);
+}
+
+.candidate-details_list dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.candidate-details_summary {
+  white-space: pre-wrap;
+}
