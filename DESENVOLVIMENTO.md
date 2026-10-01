@@ -18,6 +18,8 @@ Até aqui, a IA me ajudou em:
 - **Geração de testes:** pedi à IA testes de unidade para cada componente; revisei e removi os exagerados (ex.: testes de classes CSS e de detalhes de implementação), mantendo só os que validam comportamento.
 - **Geração de código:** pedi o código em etapas pequenas. No componente de upload de currículo (arrastar ou clicar), pedi primeiro a lógica comum aos dois modos (ex.: validação do PDF) e depois cada interação separada, revisando cada parte antes de seguir.
 - **Estilização do Frontend:** a IA gerou o código do css, tive que pedir pra alterar algumas coisas, tornar alguns valores globais para não serem inconsistentes nos componentes
+- **Tratamento de erros:** a IA sugeriu tratar o e-mail duplicado no `CandidateService`, com a exceção capturada no controller. Decidi fazer um middleware global de exceções, que converte o e-mail duplicado em 409, devolve 500 sem stack trace e registra no log os erros inesperados.
+
 
 ### Exemplos de prompts
 
