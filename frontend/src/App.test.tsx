@@ -1,8 +1,11 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
-import { describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import App from './App'
+import { listCandidates } from './api/candidates'
+
+vi.mock('./api/candidates')
 
 function renderAt(path: string) {
   render(
@@ -13,10 +16,15 @@ function renderAt(path: string) {
 }
 
 describe('App', () => {
-  it('mostra a lista de candidatos na raiz', () => {
+  beforeEach(() => {
+    vi.mocked(listCandidates).mockResolvedValue({ items: [], page: 1, pageSize: 10, totalCount: 0 })
+  })
+
+  it('mostra a lista de candidatos na raiz', async () => {
     renderAt('/')
 
     expect(screen.getByRole('heading', { name: 'Candidatos' })).toBeInTheDocument()
+    await screen.findByText(/Nenhum candidato cadastrado ainda/)
   })
 
   it('mostra o formulário de cadastro em /candidatos/novo, e não os detalhes de um candidato', () => {
@@ -42,6 +50,7 @@ describe('App', () => {
   it('navega pelo menu e marca no menu a página atual', async () => {
     const user = userEvent.setup()
     renderAt('/')
+    await screen.findByText(/Nenhum candidato cadastrado ainda/)
     expect(screen.getByRole('link', { name: 'Candidatos' })).toHaveAttribute('aria-current', 'page')
 
     await user.click(screen.getByRole('link', { name: 'Novo candidato' }))

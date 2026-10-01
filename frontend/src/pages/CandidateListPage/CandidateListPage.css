@@ -1,0 +1,24 @@
+.candidate-list_scroll {
+  overflow-x: auto;
+}
+
+.candidate-list_table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.candidate-list_table :is(th, td) {
+  padding: var(--space-sm) var(--space-md);
+  border-bottom: 1px solid color-mix(in srgb, var(--color-border) 40%, white);
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+
+.candidate-list_table th {
+  border-bottom: 2px solid var(--color-primary);
+  color: var(--color-primary);
+}
+
+.candidate-list_date {
+  white-space: nowrap;
+}
