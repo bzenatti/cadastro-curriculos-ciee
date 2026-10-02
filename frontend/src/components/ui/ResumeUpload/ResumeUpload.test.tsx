@@ -12,7 +12,6 @@ const getInput = () => screen.getByLabelText('Arquivo PDF do currículo')
 const dropOnArea = (file: File) =>
   fireEvent.drop(screen.getByText(/Arraste o currículo/), { dataTransfer: { files: [file] } })
 
-
 describe('ResumeUpload', () => {
   it('com um PDF válido, mostra o nome e entrega o arquivo para onSelect', async () => {
     const onSelect = vi.fn()

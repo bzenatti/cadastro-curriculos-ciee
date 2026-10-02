@@ -27,7 +27,7 @@ export function validateCandidate(values: CandidateFormValues): CandidateErrors 
   } else if (!EMAIL_PATTERN.test(values.email)) {
     errors.email = 'Informe um e-mail válido, como nome@exemplo.com.'
   }
-  
+
   if (values.phone !== '' && !PHONE_PATTERN.test(values.phone)) {
     errors.phone = 'Informe só números, com DDD. Ex.: 41998765432.'
   }

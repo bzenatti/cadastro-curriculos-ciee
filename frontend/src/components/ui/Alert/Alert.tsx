@@ -5,12 +5,12 @@ type AlertProps = ComponentProps<'div'> & {
   variant?: 'success' | 'error' | 'info'
 }
 
-export function Alert({ variant = 'info', children, ...rest } : AlertProps){
-    const role = variant === 'error' ? 'alert' : 'status'
+export function Alert({ variant = 'info', children, ...rest }: AlertProps) {
+  const role = variant === 'error' ? 'alert' : 'status'
 
-    return (
-        <div role={role} className={`alert alert--${variant}`} {...rest}>
-            {children}
-        </div>
-    )
+  return (
+    <div role={role} className={`alert alert--${variant}`} {...rest}>
+      {children}
+    </div>
+  )
 }

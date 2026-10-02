@@ -24,7 +24,6 @@ export function ResumeUpload({ onSelect, disabled }: ResumeUploadProps) {
   const [error, setError] = useState<string | null>(null)
   const [isDragging, setIsDragging] = useState(false)
 
-
   function handleFile(newFile: File | undefined) {
     if (disabled || !newFile) return
 
@@ -55,7 +54,6 @@ export function ResumeUpload({ onSelect, disabled }: ResumeUploadProps) {
     setIsDragging(false)
     handleFile(event.dataTransfer.files[0])
   }
-
 
   return (
     <div className="resume-upload">
