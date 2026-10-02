@@ -43,3 +43,37 @@ GET {{host}}/api/candidates/1
 
 ### Candidato que não existe (404)
 GET {{host}}/api/candidates/999999
+
+### Importar currículo (200 com nome, e-mail e telefone; nada é gravado)
+POST {{host}}/api/resumes/parse
+Content-Type: multipart/form-data; boundary=limite
+
+--limite
+Content-Disposition: form-data; name="file"; filename="curriculo-ficticio.pdf"
+Content-Type: application/pdf
+
+< ../../../samples/curriculo-ficticio.pdf
+--limite--
+
+### Arquivo que não é PDF (400)
+POST {{host}}/api/resumes/parse
+Content-Type: multipart/form-data; boundary=limite
+
+--limite
+Content-Disposition: form-data; name="file"; filename="curriculo.pdf"
+Content-Type: application/pdf
+
+< ../../../README.md
+--limite--
+
+### PDF com senha (422)
+POST {{host}}/api/resumes/parse
+Content-Type: multipart/form-data; boundary=limite
+
+--limite
+Content-Disposition: form-data; name="file"; filename="com-senha.pdf"
+Content-Type: application/pdf
+
+< ../../tests/Candidates.Api.Tests/Fixtures/com-senha.pdf
+--limite--
+

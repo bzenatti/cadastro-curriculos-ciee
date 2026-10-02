@@ -13,7 +13,7 @@ public static class PdfFileValidator
     public static void Validate([NotNull] IFormFile? file)
     {
         if (file is null) throw new InvalidResumeFileException("Envie um arquivo PDF.");
-        if (file.Length > MaxSizeBytes) throw new InvalidResumeFileException("O PDF deve ter no máximo 5 MB.");
+        if (file.Length > MaxSizeBytes) throw new InvalidResumeFileException(InvalidResumeFileException.TooLargeMessage);
         if (!StartsWithPdfSignature(file)) throw new InvalidResumeFileException("O arquivo precisa ser um PDF.");
     }
 
