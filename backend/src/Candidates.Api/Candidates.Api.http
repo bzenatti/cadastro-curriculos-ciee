@@ -1,6 +1,45 @@
-@Candidates.Api_HostAddress = http://localhost:5206
+# Para chamar a API do Docker, use @host = http://localhost:8080
+@host = http://localhost:5206
 
-GET {{Candidates.Api_HostAddress}}/openapi/v1.json
-Accept: application/json
+### Cadastrar candidato (201). Enviado duas vezes, a 2ª dá 409 (e-mail já cadastrado).
+POST {{host}}/api/candidates
+Content-Type: application/json
 
-###
+{
+  "name": "Maria Silva",
+  "email": "maria.silva@exemplo.com",
+  "phone": "11987654321",
+  "position": "Desenvolvimento",
+  "summary": "Desenvolvedora com 3 anos de experiência em React e .NET."
+}
+
+### Só os campos obrigatórios (201)
+POST {{host}}/api/candidates
+Content-Type: application/json
+
+{
+  "name": "João Souza",
+  "email": "joao.souza@exemplo.com"
+}
+
+### Dados inválidos (400, com "errors" por campo)
+POST {{host}}/api/candidates
+Content-Type: application/json
+
+{
+  "name": "",
+  "email": "isso-nao-e-email",
+  "phone": "abc"
+}
+
+### Lista, página 1 (10 por página, o padrão)
+GET {{host}}/api/candidates
+
+### Lista, página 2 com 5 por página (máximo 50)
+GET {{host}}/api/candidates?page=2&pageSize=5
+
+### Detalhe (troque o 1 por um id que exista)
+GET {{host}}/api/candidates/1
+
+### Candidato que não existe (404)
+GET {{host}}/api/candidates/999999

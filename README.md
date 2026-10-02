@@ -67,14 +67,55 @@ Todas as rotas ficam sob `/api`, em JSON (campos em `camelCase`, datas em ISO 86
 
 **PDF.** O `parse` não grava nada, não guarda o arquivo e não registra o texto extraído. Só o `POST /api/candidates` grava.
 
-## Configuração
+## Como executar
 
-A API lê a connection string da configuração `ConnectionStrings:Default`. O SQL Server roda em um container Docker.
+Requisito: [Docker](https://docs.docker.com/get-docker/) com Docker Compose. Não precisa instalar .NET nem Node.
+
+```bash
+cp .env.example .env           # senha de exemplo, só para o container local
+docker compose up -d --build   # a primeira vez demora: baixa imagens e pacotes
+```
+
+Abra **http://localhost:8080**. A API responde no mesmo endereço, em `/api` (ex.: `http://localhost:8080/api/candidates`).
+
+- Na primeira subida a API cria o banco `CandidatesDb` e a tabela sozinha (migrations); não há script para rodar.
+- Depois de alterar o código, rode `docker compose up -d --build` de novo.
+- `docker compose down` para tudo e mantém os dados; `docker compose down -v` também apaga o banco.
+- Se a porta 8080 (`web`) ou a 1434 (`db`) estiver ocupada, troque o número da esquerda em `ports`, no `docker-compose.yml`.
+
+### Possível problema: o build falha ao baixar pacotes (rede só com IPv6)
+
+**Sintoma:** `docker compose up --build` falha no `dotnet restore` (`NU1301 ... Resource temporarily unavailable`) ou no `npm ci`, embora o navegador acesse a internet.
+
+**Causa:** a sua rede tem só IPv6 (sem IPv4) e o Docker cria redes IPv4, então o build não sai para a internet. Para confirmar, o primeiro comando falha e o segundo responde:
+
+```bash
+curl -4 -sI https://api.nuget.org/v3/index.json | head -1
+curl -6 -sI https://api.nuget.org/v3/index.json | head -1
+```
+
+**Solução:** crie `docker-compose.override.yml` na raiz do projeto (o Compose o lê sozinho; vale só para a sua máquina, não o comite) para que o build use a rede do computador:
+
+```yaml
+services:
+  api:
+    build:
+      network: host
+  web:
+    build:
+      network: host
+```
+
+Rode `docker compose up -d --build` de novo. Em execução os containers não precisam de internet. Testado no Linux. Não configure DNS IPv4 (como `8.8.8.8`) em `/etc/docker/daemon.json`: sem IPv4 ele não é alcançado e o build continua falhando.
+
+## Desenvolvimento local
+
+Para alterar o código com resposta rápida, suba só o banco no Docker e rode a API e o front na sua máquina (precisa do .NET 10 SDK e do Node 22). A API lê a connection string da configuração `ConnectionStrings:Default`; no Docker completo, quem a define é o `docker-compose.yml`.
 
 **1. Subir o banco**
 
 ```bash
-cp .env.example .env       # senha de exemplo, só para o container local
+cp .env.example .env       # senha de exemplo, só para o container local (pule se já fez em "Como executar")
 docker compose up -d db    # SQL Server na porta 1434 do seu computador
 docker compose ps          # aguarde o status "healthy"
 ```
@@ -101,6 +142,44 @@ Server=localhost,1434;Database=CandidatesDb;User Id=sa;Password=<senha do .env>;
 - `TrustServerCertificate=True`: o container usa certificado autoassinado.
 - A senha do `sa` precisa ter 8+ caracteres, com maiúscula, minúscula e número ou símbolo (regra do SQL Server), e não pode conter `;`.
 - Se a porta 1434 estiver ocupada, troque o número da esquerda em `docker-compose.yml` e na string.
+
+**3. Criar a estrutura do banco**
+
+A tabela `Candidates` vem de uma migration (`backend/src/Candidates.Api/Data/Migrations`). Há dois jeitos de aplicá-la; use um só:
+
+- **Automático:** ao subir a API, ela cria o banco `CandidatesDb` (se não existir) e aplica as migrations pendentes. Isso é controlado por `Database:MigrateOnStartup`, ligado em `appsettings.Development.json` (`dotnet run`) e no `docker-compose.yml`. Não precisa de mais nada:
+
+  ```bash
+  dotnet run --project backend/src/Candidates.Api
+  ```
+
+- **Pelo `dotnet ef`:**
+
+  ```bash
+  cd backend
+  dotnet tool restore                  # instala o dotnet-ef (versão fixada em backend/dotnet-tools.json)
+  dotnet restore src/Candidates.Api    # sem isso, o dotnet ef falha com NETSDK1004 em um clone novo
+  dotnet ef database update --project src/Candidates.Api
+  ```
+
+**Prefere o SQL?** O repositório não traz um `.sql` pronto: as migrations são a fonte da verdade e um script versionado ficaria desatualizado a cada migration nova. Gere um na hora, depois do passo 2 e dos dois comandos de restore acima, a partir de `backend/`:
+
+```bash
+dotnet ef migrations script --idempotent --project src/Candidates.Api --output schema.sql
+```
+
+O `--idempotent` faz o script verificar quais migrations já foram aplicadas, então ele pode ser executado mais de uma vez. O script não cria o banco: crie o `CandidatesDb` antes e execute o `schema.sql` nele, em um cliente SQL conectado em `localhost,1434`, com o usuário `sa` e a senha do `.env`.
+
+**4. Rodar a API e o front**
+
+Em dois terminais, a partir da raiz do projeto:
+
+```bash
+dotnet run --project backend/src/Candidates.Api    # API em http://localhost:5206
+cd frontend && npm install && npm run dev          # front em http://localhost:5173
+```
+
+Abra **http://localhost:5173**: o Vite repassa `/api` para a API na porta 5206. Se usou o jeito automático do passo 3, a API já está rodando.
 
 
 ## O que este README deve conter

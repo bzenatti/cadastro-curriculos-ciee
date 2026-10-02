@@ -27,6 +27,13 @@ builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 
 var app = builder.Build();
 
+// Aplica as migrations ao subir quando Database:MigrateOnStartup é true (ligado em appsettings.Development.json e no docker compose); desligado por padrão.
+if (app.Configuration.GetValue<bool>("Database:MigrateOnStartup"))
+{
+    using var scope = app.Services.CreateScope();
+    scope.ServiceProvider.GetRequiredService<AppDbContext>().Database.Migrate();
+}
+
 app.UseExceptionHandler();
 
 app.MapControllers();
