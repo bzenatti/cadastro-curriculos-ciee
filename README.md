@@ -1,22 +1,8 @@
-# Desafio Técnico — Cadastro de Currículos
+# Cadastro de Currículos
 
-> Este README descreve o desafio, o contexto e o que se espera da documentação.
-> Itens marcados com **(a preencher)** serão completados conforme o projeto for construído.
+Aplicação web para cadastrar e consultar candidatos. O cadastro pode ser manual ou a partir de um currículo em PDF: o backend lê o arquivo, tenta achar nome, e-mail e telefone e preenche o formulário, que a pessoa corrige e completa antes de salvar. O PDF é opcional, e se a leitura falhar o cadastro manual continua funcionando.
 
-## Contexto
-
-A equipe de recrutamento precisa **cadastrar e consultar candidatos**. A aplicação oferece duas formas de cadastro:
-
-- **Cadastro manual:** a pessoa preenche o formulário e salva os dados, sem precisar enviar um documento.
-- **Cadastro com PDF:** a pessoa envia um currículo; o backend extrai o texto e tenta identificar **nome, e-mail e telefone**. As informações encontradas preenchem o formulário e podem ser corrigidas ou complementadas antes de salvar.
-
-Regras centrais:
-
-- Os dois caminhos usam **o mesmo formulário e as mesmas regras de validação**.
-- Depois de salvar, o candidato aparece em uma **listagem**, com acesso a uma **tela de detalhes**.
-- O PDF é **opcional**: a ausência do arquivo ou uma falha na leitura **não pode impedir** o cadastro manual.
-
-## Dados do cadastro
+Os dois caminhos usam o mesmo formulário e as mesmas validações:
 
 | Campo | Obrigatório |
 | --- | --- |
@@ -26,27 +12,149 @@ Regras centrais:
 | Área ou cargo de interesse | Não |
 | Resumo profissional | Não |
 
+Depois de salvo, o candidato aparece na listagem (paginada) e tem uma tela de detalhes.
+
+Decisões, uso de IA e limitações estão no [DESENVOLVIMENTO.md](DESENVOLVIMENTO.md).
+
 ## Tecnologias
 
-| Camada | Exigência do desafio | Escolha |
-| --- | --- | --- |
-| Frontend | Angular ou React | React (Vite + TypeScript) |
-| Backend | ASP.NET Core (.NET) ou Node.js | ASP.NET Core (.NET 10) |
-| Banco de dados | SQL Server | SQL Server (via Docker) |
+| Camada | Tecnologia |
+| --- | --- |
+| Frontend | React 19, Vite 8, TypeScript 6, React Router 7 |
+| Backend | ASP.NET Core 10 (.NET 10), Entity Framework Core 10, PdfPig 0.1.16 (leitura do PDF) |
+| Banco | SQL Server 2022 (imagem Docker) |
+| Testes | xUnit (backend), Vitest e Testing Library (frontend) |
+| Execução | Docker Compose; o nginx serve o front e repassa `/api` para a API |
 
-As demais bibliotecas ficam a critério de quem desenvolve. **Versões utilizadas: (a preencher).**
+## Como executar
 
-## Requisitos da aplicação
+Precisa só do [Docker](https://docs.docker.com/get-docker/) com Docker Compose (testado com Docker 29 e Compose v5). Não precisa instalar .NET nem Node.
 
-- Interface simples e funcional, integrada ao backend.
-- Leitura do PDF realizada **pelo backend**.
-- Cadastro e consulta dos dados pelo backend, com persistência no SQL Server.
-- Scripts ou migrations para criar a estrutura do banco.
-- Validação dos campos obrigatórios e do formato do e-mail.
-- Validação do arquivo enviado: apenas **PDF de até 5 MB**.
-- Mensagens claras para arquivo inválido, falha na leitura e cadastro salvo.
+```bash
+cp .env.example .env           # senha de exemplo, só para o container local
+docker compose up -d --build   # na primeira vez baixa imagens e pacotes, então demora
+```
 
-A extração **não precisa funcionar com qualquer currículo**. Quando uma informação não for identificada, o formulário deve permitir o preenchimento manual. As **limitações** da solução devem ser documentadas.
+Abra **http://localhost:8080**. A API responde no mesmo endereço, em `/api` (ex.: `http://localhost:8080/api/candidates`).
+
+- Na primeira subida a API cria o banco `CandidatesDb` e a tabela sozinha, por migrations. Não há script para rodar.
+- Depois de mudar o código, rode `docker compose up -d --build` de novo.
+- `docker compose down` para tudo e mantém os dados; `docker compose down -v` apaga o banco também.
+- Se a porta 8080 (`web`) ou a 1434 (`db`) estiver ocupada, troque o número da esquerda em `ports`, no `docker-compose.yml`.
+
+### Possível problema: o build falha ao baixar pacotes (rede só com IPv6)
+
+**Sintoma:** `docker compose up --build` falha no `dotnet restore` (`NU1301 ... Resource temporarily unavailable`) ou no `npm ci`, mesmo com a internet funcionando no navegador.
+
+**Causa:** a rede tem só IPv6 e o Docker cria redes IPv4, então o build não sai para a internet. Para confirmar, o primeiro comando falha e o segundo responde:
+
+```bash
+curl -4 -sI https://api.nuget.org/v3/index.json | head -1
+curl -6 -sI https://api.nuget.org/v3/index.json | head -1
+```
+
+**Solução:** crie o `docker-compose.override.yml` na raiz (o Compose o lê sozinho; vale só para a sua máquina, não faça commit dele) para o build usar a rede do computador:
+
+```yaml
+services:
+  api:
+    build:
+      network: host
+  web:
+    build:
+      network: host
+```
+
+Rode `docker compose up -d --build` de novo. Depois do build os containers não precisam de internet. Testado no Linux. Não configure um DNS IPv4 (como `8.8.8.8`) em `/etc/docker/daemon.json`: sem IPv4 ele não é alcançado e o build continua falhando.
+
+## Desenvolvimento local
+
+Para mudar o código com resposta rápida, suba só o banco no Docker e rode a API e o front na sua máquina. Precisa do .NET 10 SDK e do Node 22.
+
+### 1. Subir o banco
+
+```bash
+cp .env.example .env       # pule se já fez em "Como executar"
+docker compose up -d db    # SQL Server na porta 1434 do seu computador
+docker compose ps          # espere o status "healthy"
+```
+
+### 2. Informar a connection string à API
+
+A API lê a string de `ConnectionStrings:Default`. Fora do Docker (`dotnet run`, `dotnet ef`), guarde-a no `user-secrets`, que fica fora do repositório:
+
+```bash
+. ./.env
+dotnet user-secrets set "ConnectionStrings:Default" "Server=localhost,1434;Database=CandidatesDb;User Id=sa;Password=$DB_PASSWORD;TrustServerCertificate=True" --project backend/src/Candidates.Api
+```
+
+O `user-secrets` vale só para a máquina onde o comando rodou. Em outra, repita este passo. No Docker completo, quem define a string é o `docker-compose.yml`.
+
+Formato, sem credencial real:
+
+```text
+Server=localhost,1434;Database=CandidatesDb;User Id=sa;Password=<senha do .env>;TrustServerCertificate=True
+```
+
+- `Server=localhost,1434`: endereço e porta (depois da **vírgula**) publicada pelo Docker.
+- `Database=CandidatesDb`: criado pelas migrations.
+- `TrustServerCertificate=True`: o container usa certificado autoassinado.
+- A senha do `sa` precisa ter 8+ caracteres, com maiúscula, minúscula e número ou símbolo (regra do SQL Server), e não pode ter `;`.
+- Se a porta 1434 estiver ocupada, troque-a no `docker-compose.yml` e na string.
+
+### 3. Criar a estrutura do banco
+
+A tabela `Candidates` vem de uma migration (`backend/src/Candidates.Api/Data/Migrations`). Use um destes jeitos:
+
+- **Automático:** ao subir a API, ela cria o banco `CandidatesDb` (se não existir) e aplica as migrations pendentes. Isso depende de `Database:MigrateOnStartup`, ligado em `appsettings.Development.json` (para o `dotnet run`) e no `docker-compose.yml`. Não precisa de mais nada:
+
+  ```bash
+  dotnet run --project backend/src/Candidates.Api
+  ```
+
+- **Pelo `dotnet ef`:**
+
+  ```bash
+  cd backend
+  dotnet tool restore                  # instala o dotnet-ef (versão fixada em backend/dotnet-tools.json)
+  dotnet restore src/Candidates.Api    # sem isso, o dotnet ef falha com NETSDK1004 em um clone novo
+  dotnet ef database update --project src/Candidates.Api
+  ```
+
+**Prefere o SQL?** O repositório não traz um `.sql` pronto: as migrations são a fonte da verdade, e um script versionado ficaria desatualizado a cada migration nova. Para gerar um, rode a partir de `backend/`, depois do passo 2 e dos dois restores acima:
+
+```bash
+dotnet ef migrations script --idempotent --project src/Candidates.Api --output schema.sql
+```
+
+O `--idempotent` faz o script conferir quais migrations já foram aplicadas, então ele pode rodar mais de uma vez. Ele não cria o banco: crie o `CandidatesDb` antes e execute o `schema.sql` nele, em um cliente SQL ligado a `localhost,1434`, com o usuário `sa` e a senha do `.env`.
+
+### 4. Rodar a API e o front
+
+Em dois terminais, a partir da raiz:
+
+```bash
+dotnet run --project backend/src/Candidates.Api    # API em http://localhost:5206
+cd frontend && npm install && npm run dev          # front em http://localhost:5173
+```
+
+Abra **http://localhost:5173**: o Vite repassa `/api` para a API na porta 5206. Se você usou o jeito automático do passo 3, a API já está rodando.
+
+## Testes
+
+Backend (não precisa de banco nem de Docker):
+
+```bash
+dotnet test backend/Candidates.slnx
+```
+
+Frontend:
+
+```bash
+cd frontend
+npm install          # só na primeira vez
+npm test -- --run    # sem o --run, o Vitest fica observando as mudanças
+```
 
 ## API
 
@@ -63,164 +171,30 @@ Todas as rotas ficam sob `/api`, em JSON (campos em `camelCase`, datas em ISO 86
 
 **Erros.** Todo erro segue o `ProblemDetails` (RFC 9457): `{ type, title, status, detail, traceId }`, sem stack trace. O `detail` é uma mensagem em português pronta para mostrar. O `400` de validação traz também `errors`, no formato `{ campo: ["mensagem"] }`, com os mesmos nomes do formulário (`name`, `email`, ...).
 
-**Validação.** Backend e frontend usam as mesmas regras (o backend é a fonte da verdade): nome e e-mail obrigatórios; e-mail com `^[^@\s]+@[^@\s]+\.[^@\s]+$`; telefone opcional, só números, com `^[0-9]{10,11}$`; tamanhos máximos nome 150, e-mail 254, telefone 20, cargo 100 e resumo 2000. O e-mail é único por índice no banco, sem diferenciar maiúsculas de minúsculas.
+**Validação.** Backend e frontend usam as mesmas regras, e o backend é a fonte da verdade: nome e e-mail obrigatórios; e-mail com `^[^@\s]+@[^@\s]+\.[^@\s]+$`; telefone opcional, só números, com `^[0-9]{10,11}$`; tamanhos máximos: nome 150, e-mail 254, telefone 20, cargo 100 e resumo 2000. O e-mail é único por índice no banco, sem diferenciar maiúsculas de minúsculas.
 
-**PDF.** O `parse` não grava nada, não guarda o arquivo e não registra o texto extraído. Só o `POST /api/candidates` grava.
+## Importação de PDF
 
-## Como executar
+O backend lê as 5 primeiras páginas e procura nome, e-mail e telefone no texto. É uma heurística: ela sugere os dados e a pessoa confere tudo antes de salvar. A leitura não grava nada, e o arquivo não é guardado.
 
-Requisito: [Docker](https://docs.docker.com/get-docker/) com Docker Compose. Não precisa instalar .NET nem Node.
+Limitações:
 
-```bash
-cp .env.example .env           # senha de exemplo, só para o container local
-docker compose up -d --build   # a primeira vez demora: baixa imagens e pacotes
-```
+- **PDF sem texto** (escaneado, só imagem), corrompido ou protegido por senha não é lido: a API responde `422` e o cadastro manual segue disponível. Não há OCR.
+- **Nome:** é a primeira linha, entre as 10 primeiras, que parece um nome (2 a 6 palavras com inicial maiúscula). Um cargo acima do nome pode ser tomado como nome, e rótulos como `Nome: Fulana` não são reconhecidos.
+- **E-mail e telefone:** vale o primeiro de cada. O telefone só é reconhecido no formato brasileiro (DDD + 8 ou 9 dígitos, com ou sem +55).
+- **Layout:** em currículos de duas colunas, a ordem do texto pode vir misturada.
 
-Abra **http://localhost:8080**. A API responde no mesmo endereço, em `/api` (ex.: `http://localhost:8080/api/candidates`).
+Mais detalhes em [DESENVOLVIMENTO.md](DESENVOLVIMENTO.md#limitações-do-parser-de-currículo).
 
-- Na primeira subida a API cria o banco `CandidatesDb` e a tabela sozinha (migrations); não há script para rodar.
-- Depois de alterar o código, rode `docker compose up -d --build` de novo.
-- `docker compose down` para tudo e mantém os dados; `docker compose down -v` também apaga o banco.
-- Se a porta 8080 (`web`) ou a 1434 (`db`) estiver ocupada, troque o número da esquerda em `ports`, no `docker-compose.yml`.
+### Currículos de exemplo
 
-### Possível problema: o build falha ao baixar pacotes (rede só com IPv6)
+A pasta `samples/` tem PDFs fictícios para testar a importação. O `curriculo-ficticio.pdf` é o caso comum; os outros mostram as limitações acima.
 
-**Sintoma:** `docker compose up --build` falha no `dotnet restore` (`NU1301 ... Resource temporarily unavailable`) ou no `npm ci`, embora o navegador acesse a internet.
-
-**Causa:** a sua rede tem só IPv6 (sem IPv4) e o Docker cria redes IPv4, então o build não sai para a internet. Para confirmar, o primeiro comando falha e o segundo responde:
-
-```bash
-curl -4 -sI https://api.nuget.org/v3/index.json | head -1
-curl -6 -sI https://api.nuget.org/v3/index.json | head -1
-```
-
-**Solução:** crie `docker-compose.override.yml` na raiz do projeto (o Compose o lê sozinho; vale só para a sua máquina, não o comite) para que o build use a rede do computador:
-
-```yaml
-services:
-  api:
-    build:
-      network: host
-  web:
-    build:
-      network: host
-```
-
-Rode `docker compose up -d --build` de novo. Em execução os containers não precisam de internet. Testado no Linux. Não configure DNS IPv4 (como `8.8.8.8`) em `/etc/docker/daemon.json`: sem IPv4 ele não é alcançado e o build continua falhando.
-
-## Desenvolvimento local
-
-Para alterar o código com resposta rápida, suba só o banco no Docker e rode a API e o front na sua máquina (precisa do .NET 10 SDK e do Node 22). A API lê a connection string da configuração `ConnectionStrings:Default`; no Docker completo, quem a define é o `docker-compose.yml`.
-
-**1. Subir o banco**
-
-```bash
-cp .env.example .env       # senha de exemplo, só para o container local (pule se já fez em "Como executar")
-docker compose up -d db    # SQL Server na porta 1434 do seu computador
-docker compose ps          # aguarde o status "healthy"
-```
-
-**2. Informar a connection string à API**
-
-Para rodar a API fora do Docker (`dotnet run`, `dotnet ef`), guarde a string no `user-secrets`, que fica fora do repositório:
-
-```bash
-. ./.env
-dotnet user-secrets set "ConnectionStrings:Default" "Server=localhost,1434;Database=CandidatesDb;User Id=sa;Password=$DB_PASSWORD;TrustServerCertificate=True" --project backend/src/Candidates.Api
-```
-
-O `user-secrets` vale só para o computador onde o comando foi executado. Em outra máquina, repita o passo 2.
-
-Formato da string, sem credencial real:
-
-```text
-Server=localhost,1434;Database=CandidatesDb;User Id=sa;Password=<senha do .env>;TrustServerCertificate=True
-```
-
-- `Server=localhost,1434`: endereço e porta (depois da **vírgula**) publicada pelo Docker.
-- `Database=CandidatesDb`: criado pelas migrations.
-- `TrustServerCertificate=True`: o container usa certificado autoassinado.
-- A senha do `sa` precisa ter 8+ caracteres, com maiúscula, minúscula e número ou símbolo (regra do SQL Server), e não pode conter `;`.
-- Se a porta 1434 estiver ocupada, troque o número da esquerda em `docker-compose.yml` e na string.
-
-**3. Criar a estrutura do banco**
-
-A tabela `Candidates` vem de uma migration (`backend/src/Candidates.Api/Data/Migrations`). Há dois jeitos de aplicá-la; use um só:
-
-- **Automático:** ao subir a API, ela cria o banco `CandidatesDb` (se não existir) e aplica as migrations pendentes. Isso é controlado por `Database:MigrateOnStartup`, ligado em `appsettings.Development.json` (`dotnet run`) e no `docker-compose.yml`. Não precisa de mais nada:
-
-  ```bash
-  dotnet run --project backend/src/Candidates.Api
-  ```
-
-- **Pelo `dotnet ef`:**
-
-  ```bash
-  cd backend
-  dotnet tool restore                  # instala o dotnet-ef (versão fixada em backend/dotnet-tools.json)
-  dotnet restore src/Candidates.Api    # sem isso, o dotnet ef falha com NETSDK1004 em um clone novo
-  dotnet ef database update --project src/Candidates.Api
-  ```
-
-**Prefere o SQL?** O repositório não traz um `.sql` pronto: as migrations são a fonte da verdade e um script versionado ficaria desatualizado a cada migration nova. Gere um na hora, depois do passo 2 e dos dois comandos de restore acima, a partir de `backend/`:
-
-```bash
-dotnet ef migrations script --idempotent --project src/Candidates.Api --output schema.sql
-```
-
-O `--idempotent` faz o script verificar quais migrations já foram aplicadas, então ele pode ser executado mais de uma vez. O script não cria o banco: crie o `CandidatesDb` antes e execute o `schema.sql` nele, em um cliente SQL conectado em `localhost,1434`, com o usuário `sa` e a senha do `.env`.
-
-**4. Rodar a API e o front**
-
-Em dois terminais, a partir da raiz do projeto:
-
-```bash
-dotnet run --project backend/src/Candidates.Api    # API em http://localhost:5206
-cd frontend && npm install && npm run dev          # front em http://localhost:5173
-```
-
-Abra **http://localhost:5173**: o Vite repassa `/api` para a API na porta 5206. Se usou o jeito automático do passo 3, a API já está rodando.
-
-
-## O que este README deve conter
-
-- [ ] Tecnologias e **versões** utilizadas
-- [ ] Requisitos para executar (SDK, Node, Docker etc.)
-- [ ] Como **configurar a conexão** com o SQL Server (exemplo sem credenciais reais)
-- [ ] Como **criar a estrutura do banco** (migrations ou scripts)
-- [ ] Como **executar** a aplicação (backend e frontend)
-- [ ] Como **rodar os testes**
-- [ ] **Limitações** da extração de dados do PDF
-
-## O que o repositório deve conter
-
-- [ ] Código-fonte do frontend e do backend
-- [ ] `README.md` (este arquivo)
-- [ ] `DESENVOLVIMENTO.md` com o relato do desenvolvimento
-- [ ] Exemplos de configuração sem credenciais reais
-- [ ] Scripts ou migrations do banco de dados
-- [ ] Um currículo fictício em PDF para testar a importação
-- [ ] Histórico de commits que acompanhe a evolução do trabalho
-
-## O que o DESENVOLVIMENTO.md deve explicar
-
-- Como o trabalho foi organizado e executado
-- Principais decisões técnicas e seus motivos
-- Ferramentas de IA e modelos utilizados
-- Em quais etapas a IA ajudou, com exemplos de pedidos e como as respostas foram aproveitadas
-- O que foi corrigido, adaptado ou descartado
-- Como a solução foi verificada
-- Tempo aproximado dedicado ao desafio
-- Dificuldades, limitações e melhorias com mais tempo
-
-## Critérios de avaliação
-
-1. Funcionamento dos cadastros manual e com PDF, da listagem e da consulta de detalhes
-2. Integração entre frontend, backend e SQL Server
-3. Clareza e organização do código
-4. Validações e tratamento de erros
-5. Relevância dos testes
-6. Facilidade para configurar e executar o projeto
-7. Clareza na documentação e capacidade de explicar as decisões
-
-> Diretriz: preferir uma solução **simples, funcional** e que possa ser compreendida e evoluída.
+| Arquivo | O que mostra |
+| --- | --- |
+| `curriculo-ficticio.pdf` | currículo comum: nome, e-mail e telefone encontrados |
+| `02-duas-colunas.pdf` | duas colunas, em inglês |
+| `03-caixa-alta.pdf` | nome em caixa alta (vira "Beltrano Sicrano de Tal") e telefone fixo |
+| `04-rotulos.pdf` | nome com rótulo (`Nome:`): o nome não é encontrado |
+| `05-cargo-no-topo.pdf` | cargo acima do nome: o cargo é tomado como nome |
+| `06-sem-contato.pdf` | só o nome; não há e-mail nem telefone |
