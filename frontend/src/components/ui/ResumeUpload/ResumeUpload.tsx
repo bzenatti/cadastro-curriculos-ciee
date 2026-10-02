@@ -7,6 +7,7 @@ const MAX_SIZE_BYTES = 5 * 1024 * 1024
 
 type ResumeUploadProps = {
   onSelect: (file: File) => void
+  disabled?: boolean
 }
 
 function validatePdf(file: File): string | null {
@@ -17,7 +18,7 @@ function validatePdf(file: File): string | null {
   return null
 }
 
-export function ResumeUpload({ onSelect }: ResumeUploadProps) {
+export function ResumeUpload({ onSelect, disabled }: ResumeUploadProps) {
   const inputRef = useRef<HTMLInputElement>(null)
   const [file, setFile] = useState<File | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -25,7 +26,7 @@ export function ResumeUpload({ onSelect }: ResumeUploadProps) {
 
 
   function handleFile(newFile: File | undefined) {
-    if (!newFile) return
+    if (disabled || !newFile) return
 
     const validationError = validatePdf(newFile)
     setError(validationError)
@@ -41,7 +42,7 @@ export function ResumeUpload({ onSelect }: ResumeUploadProps) {
 
   function handleDragOver(event: DragEvent<HTMLDivElement>) {
     event.preventDefault()
-    setIsDragging(true)
+    setIsDragging(!disabled)
   }
 
   function handleDragLeave(event: DragEvent<HTMLDivElement>) {
@@ -74,7 +75,12 @@ export function ResumeUpload({ onSelect }: ResumeUploadProps) {
         />
         <p className="resume-upload_text">
           Arraste o currículo em PDF para cá ou{' '}
-          <button type="button" className="resume-upload_link" onClick={() => inputRef.current?.click()}>
+          <button
+            type="button"
+            className="resume-upload_link"
+            disabled={disabled}
+            onClick={() => inputRef.current?.click()}
+          >
             escolha o arquivo
           </button>
         </p>

@@ -35,3 +35,12 @@ export function listCandidates(page: number): Promise<Page<CandidateListItem>> {
 export function getCandidate(id: string): Promise<Candidate> {
   return request<Candidate>(`/api/candidates/${encodeURIComponent(id)}`)
 }
+
+export type ResumeExtraction = { name: string | null; email: string | null; phone: string | null }
+
+// Sem Content-Type: o navegador define "multipart/form-data" com o boundary do FormData.
+export function parseResume(file: File): Promise<ResumeExtraction> {
+  const body = new FormData()
+  body.append('file', file)
+  return request<ResumeExtraction>('/api/resumes/parse', { method: 'POST', body })
+}

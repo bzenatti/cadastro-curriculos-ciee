@@ -86,4 +86,14 @@ describe('ResumeUpload', () => {
     expect(screen.getByRole('alert')).toHaveTextContent('O arquivo precisa ser um PDF.')
     expect(onSelect).not.toHaveBeenCalled()
   })
+
+  it('desabilitado, o botão não funciona e soltar um PDF não chama onSelect', () => {
+    const onSelect = vi.fn()
+    render(<ResumeUpload onSelect={onSelect} disabled />)
+
+    dropOnArea(makePdf())
+
+    expect(screen.getByRole('button', { name: 'escolha o arquivo' })).toBeDisabled()
+    expect(onSelect).not.toHaveBeenCalled()
+  })
 })

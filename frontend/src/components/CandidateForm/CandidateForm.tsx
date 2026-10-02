@@ -14,28 +14,33 @@ export type CandidateFormValues = {
   summary: string
 }
 
-const EMPTY_VALUES: CandidateFormValues = {
-  name: '',
-  email: '',
-  phone: '',
-  position: '',
-  summary: '',
-}
-
 type CandidateFormProps = {
+  values: CandidateFormValues
+  onChange: (values: CandidateFormValues) => void
+  // trava o botão enquanto outra coisa usa o formulário (ex.: a leitura do PDF)
+  disabled?: boolean
   // quem chama trata a API; pode devolver erros (ex.: do servidor) para o formulário mostrar embaixo dos campos
   onSubmit: (values: CandidateFormValues) => Promise<CandidateErrors | void>
 }
 
-export function CandidateForm({ onSubmit }: CandidateFormProps) {
-  const [values, setValues] = useState(EMPTY_VALUES)
+export function CandidateForm({ values, onChange, disabled, onSubmit }: CandidateFormProps) {
   const [errors, setErrors] = useState<CandidateErrors>({})
   const [submitting, setSubmitting] = useState(false)
+  const [previousValues, setPreviousValues] = useState(values)
+
+  // Campo que mudou (digitado ou vindo do PDF): o erro antigo dele não vale mais.
+  if (values !== previousValues) {
+    const next = { ...errors }
+    for (const name of Object.keys(values) as (keyof CandidateFormValues)[]) {
+      if (values[name] !== previousValues[name]) next[name] = undefined
+    }
+    setPreviousValues(values)
+    setErrors(next)
+  }
 
   function handleChange(event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
     const { name, value } = event.target
-    setValues((current) => ({ ...current, [name]: value }))
-    setErrors((current) => ({ ...current, [name]: undefined }))
+    onChange({ ...values, [name]: value })
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -90,6 +95,7 @@ export function CandidateForm({ onSubmit }: CandidateFormProps) {
       <Button
         type="submit"
         loading={submitting}
+        disabled={disabled}
         // sem isso, o erro do campo que perde o foco desloca o botão, o clique se perde e nem todos os erros aparecem
         onMouseDown={(event) => event.preventDefault()}
       >
