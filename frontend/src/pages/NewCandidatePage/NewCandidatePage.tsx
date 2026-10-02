@@ -52,6 +52,8 @@ export function NewCandidatePage() {
       })
       setFeedback({ variant: 'info', message: importMessage(found, values) })
     } catch (error) {
+      // "Arquivo selecionado" só vale para um PDF que foi lido: recria o quadro de upload para apagá-lo.
+      setUploadKey((current) => current + 1)
       const message =
         error instanceof ApiError ? error.message : 'Não foi possível ler o currículo. Preencha o formulário à mão.'
       setFeedback({ variant: 'error', message })

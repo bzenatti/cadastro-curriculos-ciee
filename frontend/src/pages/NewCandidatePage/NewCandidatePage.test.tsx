@@ -48,6 +48,7 @@ describe('NewCandidatePage', () => {
       expect(field('Nome completo')).toHaveValue('Maria da Silva')
       expect(field('E-mail')).toHaveValue('maria@example.com')
       expect(field('Telefone')).toHaveValue('')
+      expect(screen.getByText('Arquivo selecionado: cv.pdf')).toBeInTheDocument()
     })
 
     it('não sobrescreve o que a pessoa já digitou', async () => {
@@ -64,7 +65,7 @@ describe('NewCandidatePage', () => {
       expect(field('Telefone')).toHaveValue('41900001234')
     })
 
-    it('com PDF ilegível, mostra o motivo e mantém o que já estava no formulário', async () => {
+    it('com PDF ilegível, mostra o motivo, mantém o formulário e não deixa o PDF como "selecionado"', async () => {
       const user = userEvent.setup()
       mockedParse.mockRejectedValue(new ApiError(422, 'O PDF está protegido por senha. Envie uma versão sem senha.'))
       render(<NewCandidatePage />)
@@ -75,6 +76,7 @@ describe('NewCandidatePage', () => {
       expect(await screen.findByRole('alert')).toHaveTextContent('O PDF está protegido por senha.')
       expect(field('Nome completo')).toHaveValue('Maria da Silva')
       expect(button('Cadastrar')).toBeEnabled()
+      expect(screen.queryByText(/Arquivo selecionado/)).not.toBeInTheDocument()
     })
 
     it('enquanto lê, avisa e trava o botão Cadastrar e a escolha de outro arquivo', async () => {
