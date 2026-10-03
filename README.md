@@ -23,14 +23,18 @@ Decisões, uso de IA e limitações estão no [DESENVOLVIMENTO.md](DESENVOLVIMEN
 | Frontend | React 19, Vite 8, TypeScript 6, React Router 7 |
 | Backend | ASP.NET Core 10 (.NET 10), Entity Framework Core 10, PdfPig 0.1.16 (leitura do PDF) |
 | Banco | SQL Server 2022 (imagem Docker) |
-| Testes | xUnit (backend), Vitest e Testing Library (frontend) |
+| Testes | xUnit e Testcontainers (backend), Vitest e Testing Library (frontend) |
 | Execução | Docker Compose; o nginx serve o front e repassa `/api` para a API |
 
 ## Como executar
 
 Precisa só do [Docker](https://docs.docker.com/get-docker/) com Docker Compose (testado com Docker 29 e Compose v5). Não precisa instalar .NET nem Node.
 
+Baixe o projeto (ou o ZIP pelo botão **Code** do GitHub, descompactando e entrando na pasta) e suba tudo:
+
 ```bash
+git clone <URL do repositório>
+cd <pasta criada pelo clone>
 cp .env.example .env           # senha de exemplo, só para o container local
 docker compose up -d --build   # na primeira vez baixa imagens e pacotes, então demora
 ```
@@ -39,21 +43,23 @@ Abra **http://localhost:8080**. A API responde no mesmo endereço, em `/api` (ex
 
 - Na primeira subida a API cria o banco `CandidatesDb` e a tabela sozinha, por migrations. Não há script para rodar.
 - Depois de mudar o código, rode `docker compose up -d --build` de novo.
-- `docker compose down` para tudo e mantém os dados; `docker compose down -v` apaga o banco também.
+- Para parar ou apagar tudo, veja [Parar e apagar tudo](#parar-e-apagar-tudo).
 - Se a porta 8080 (`web`) ou a 1434 (`db`) estiver ocupada, troque o número da esquerda em `ports`, no `docker-compose.yml`.
+
+### Parar e apagar tudo
+
+Na pasta do projeto, em bash (Linux, macOS ou WSL):
+
+```bash
+docker compose down                  # para os containers e mantém o banco
+docker compose down -v --rmi local   # apaga também o banco e as imagens da API e do front
+```
+
+Sobra a imagem do SQL Server (cerca de 2 GB, usada também nos testes): `docker rmi mcr.microsoft.com/mssql/server:2022-latest`.
 
 ### Possível problema: o build falha ao baixar pacotes (rede só com IPv6)
 
-**Sintoma:** `docker compose up --build` falha no `dotnet restore` (`NU1301 ... Resource temporarily unavailable`) ou no `npm ci`, mesmo com a internet funcionando no navegador.
-
-**Causa:** a rede tem só IPv6 e o Docker cria redes IPv4, então o build não sai para a internet. Para confirmar, o primeiro comando falha e o segundo responde:
-
-```bash
-curl -4 -sI https://api.nuget.org/v3/index.json | head -1
-curl -6 -sI https://api.nuget.org/v3/index.json | head -1
-```
-
-**Solução:** crie o `docker-compose.override.yml` na raiz (o Compose o lê sozinho; vale só para a sua máquina, não faça commit dele) para o build usar a rede do computador:
+Se o `docker compose up --build` falhar no `dotnet restore` (`NU1301`) ou no `npm ci` com a internet funcionando, a rede provavelmente tem só IPv6 e o build do Docker não sai para a internet. Crie o `docker-compose.override.yml` na raiz (vale só para a sua máquina, não faça commit) e rode `docker compose up -d --build` de novo:
 
 ```yaml
 services:
@@ -65,7 +71,7 @@ services:
       network: host
 ```
 
-Rode `docker compose up -d --build` de novo. Depois do build os containers não precisam de internet. Testado no Linux. Não configure um DNS IPv4 (como `8.8.8.8`) em `/etc/docker/daemon.json`: sem IPv4 ele não é alcançado e o build continua falhando.
+Testado no Linux.
 
 ## Desenvolvimento local
 
@@ -121,13 +127,13 @@ A tabela `Candidates` vem de uma migration (`backend/src/Candidates.Api/Data/Mig
   dotnet ef database update --project src/Candidates.Api
   ```
 
-**Prefere o SQL?** O repositório não traz um `.sql` pronto: as migrations são a fonte da verdade, e um script versionado ficaria desatualizado a cada migration nova. Para gerar um, rode a partir de `backend/`, depois do passo 2 e dos dois restores acima:
+**Prefere o SQL?** Não há `.sql` versionado: as migrations são a fonte da verdade. Para gerar um, rode a partir de `backend/`, depois do passo 2 e dos dois restores acima:
 
 ```bash
 dotnet ef migrations script --idempotent --project src/Candidates.Api --output schema.sql
 ```
 
-O `--idempotent` faz o script conferir quais migrations já foram aplicadas, então ele pode rodar mais de uma vez. Ele não cria o banco: crie o `CandidatesDb` antes e execute o `schema.sql` nele, em um cliente SQL ligado a `localhost,1434`, com o usuário `sa` e a senha do `.env`.
+Crie o banco `CandidatesDb` e execute o `schema.sql` nele, em `localhost,1434`, com o usuário `sa` e a senha do `.env`.
 
 ### 4. Rodar a API e o front
 
@@ -135,6 +141,9 @@ Em dois terminais, a partir da raiz:
 
 ```bash
 dotnet run --project backend/src/Candidates.Api    # API em http://localhost:5206
+```
+
+```bash
 cd frontend && npm install && npm run dev          # front em http://localhost:5173
 ```
 
@@ -142,11 +151,24 @@ Abra **http://localhost:5173**: o Vite repassa `/api` para a API na porta 5206. 
 
 ## Testes
 
-Backend (não precisa de banco nem de Docker):
+Backend. Os testes de integração sobem um SQL Server num container e precisam do Docker rodando:
 
 ```bash
 dotnet test backend/Candidates.slnx
+dotnet test backend/Candidates.slnx --filter "Category!=Integration"   # só os unitários, sem Docker
 ```
+
+Eles rodam no ambiente `Testing`, com um banco próprio (`CandidatesTests`) criado pelas migrations, sem tocar no de desenvolvimento.
+
+| Requisito | Testes |
+| --- | --- |
+| Validação dos campos | `Dtos/CreateCandidateRequestTests`, `Integration/CandidatesApiTests` |
+| Cadastro, listagem, detalhe, e-mail único (409, inclusive simultâneo) e 404 | `Integration/CandidatesApiTests` |
+| Validação do arquivo (PDF até 5 MB) e mensagens de erro | `Services/PdfFileValidatorTests`, `Integration/ResumesApiTests` |
+| Leitura do PDF e extração dos dados | `Services/PdfTextExtractorTests`, `Services/ResumeParserTests`, `Integration/ResumesApiTests` (PDFs de `samples/`) |
+| Erros em `ProblemDetails`, sem detalhes internos | `Errors/GlobalExceptionHandlerTests` |
+
+Não há testes de autenticação nem de limite de requisições, porque a API não tem nenhum dos dois ([Melhorias futuras](DESENVOLVIMENTO.md#melhorias-futuras)). O servidor de teste não aplica o limite de corpo do Kestrel; esse corte só é coberto no teste do tratador de erros.
 
 Frontend:
 
@@ -188,7 +210,7 @@ Mais detalhes em [DESENVOLVIMENTO.md](DESENVOLVIMENTO.md#limitações-do-parser-
 
 ### Currículos de exemplo
 
-A pasta `samples/` tem PDFs fictícios para testar a importação. O `curriculo-ficticio.pdf` é o caso comum; os outros mostram as limitações acima.
+A pasta `samples/` tem PDFs fictícios para testar a importação. O `curriculo-ficticio.pdf` é o caso comum. Os de `02` a `06` mostram as limitações do parser, e os de `07` a `09` são PDFs que a API não consegue ler.
 
 | Arquivo | O que mostra |
 | --- | --- |
@@ -198,3 +220,6 @@ A pasta `samples/` tem PDFs fictícios para testar a importação. O `curriculo-
 | `04-rotulos.pdf` | nome com rótulo (`Nome:`): o nome não é encontrado |
 | `05-cargo-no-topo.pdf` | cargo acima do nome: o cargo é tomado como nome |
 | `06-sem-contato.pdf` | só o nome; não há e-mail nem telefone |
+| `07-sem-texto.pdf` | página sem texto (como um PDF escaneado): `422`, preencha à mão |
+| `08-corrompido.pdf` | cabeçalho de PDF, mas o arquivo está quebrado: `422` |
+| `09-com-senha.pdf` | protegido por senha (`senha-de-teste`): `422` |

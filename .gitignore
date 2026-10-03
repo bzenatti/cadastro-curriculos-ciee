@@ -477,5 +477,5 @@ $RECYCLE.BIN/
 *.swp
 .env
 
-# Configuração local do editor (cópia guardada no repo ciee-desafio-config)
+# Configuração local do editor
 .editorconfig
