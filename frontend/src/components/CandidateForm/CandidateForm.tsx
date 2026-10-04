@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import type { ChangeEvent, FormEvent, KeyboardEvent } from 'react'
 import { MAX_LENGTH, validateCandidate } from '../../validation/validateCandidate'
 import type { CandidateErrors } from '../../validation/validateCandidate'
@@ -26,6 +26,8 @@ type CandidateFormProps = {
 export function CandidateForm({ values, onChange, disabled, onSubmit }: CandidateFormProps) {
   const [errors, setErrors] = useState<CandidateErrors>({})
   const [submitting, setSubmitting] = useState(false)
+  // Dois envios no mesmo instante (duplo clique) enxergam o mesmo `submitting`: o state só muda no próximo render.
+  const sending = useRef(false)
   const [previousValues, setPreviousValues] = useState(values)
 
   // Campo que mudou (digitado ou vindo do PDF): o erro antigo dele não vale mais.
@@ -45,15 +47,18 @@ export function CandidateForm({ values, onChange, disabled, onSubmit }: Candidat
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
+    if (sending.current) return
     const foundErrors = validateCandidate(values)
     setErrors(foundErrors)
     if (Object.keys(foundErrors).length > 0) return
 
+    sending.current = true
     setSubmitting(true)
     try {
       const serverErrors = await onSubmit(values)
       if (serverErrors) setErrors(serverErrors)
     } finally {
+      sending.current = false
       setSubmitting(false)
     }
   }

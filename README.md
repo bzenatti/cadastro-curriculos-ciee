@@ -33,8 +33,8 @@ Precisa só do [Docker](https://docs.docker.com/get-docker/) com Docker Compose 
 Baixe o projeto (ou o ZIP pelo botão **Code** do GitHub, descompactando e entrando na pasta) e suba tudo:
 
 ```bash
-git clone <URL do repositório>
-cd <pasta criada pelo clone>
+git clone https://github.com/bzenatti/cadastro-curriculos-ciee.git
+cd cadastro-curriculos-ciee
 cp .env.example .env           # senha de exemplo, só para o container local
 docker compose up -d --build   # na primeira vez baixa imagens e pacotes, então demora
 ```
@@ -191,7 +191,7 @@ Todas as rotas ficam sob `/api`, em JSON (campos em `camelCase`, datas em ISO 86
 
 **Formatos.** Item da lista: `{ id, name, email, position, createdAt }`. Candidato (detalhe e resposta do cadastro): `{ id, name, email, phone, position, summary, createdAt }`. Campos opcionais vazios: a requisição aceita `""` ou `null`, e a resposta devolve `null`. A lista vem dos mais recentes para os mais antigos (`createdAt` e `id` decrescentes). Páginas ou tamanhos fora do intervalo são ajustados, sem erro.
 
-**Erros.** Todo erro segue o `ProblemDetails` (RFC 9457): `{ type, title, status, detail, traceId }`, sem stack trace. O `detail` é uma mensagem em português pronta para mostrar. O `400` de validação traz também `errors`, no formato `{ campo: ["mensagem"] }`, com os mesmos nomes do formulário (`name`, `email`, ...).
+**Erros.** Os erros da API seguem o `ProblemDetails` (RFC 9457): `{ type, title, status, detail, traceId }`, sem stack trace, com o `detail` em português pronto para mostrar. O `400` de validação do cadastro traz as mensagens em `errors`, no formato `{ campo: ["mensagem"] }`, com os mesmos nomes do formulário (`name`, `email`, ...). Requisições que o front nunca envia (JSON malformado, `page=abc`, id que não é número) recebem a resposta padrão do ASP.NET, em inglês.
 
 **Validação.** Backend e frontend usam as mesmas regras, e o backend é a fonte da verdade: nome e e-mail obrigatórios; e-mail com `^[^@\s]+@[^@\s]+\.[^@\s]+$`; telefone opcional, só números, com `^[0-9]{10,11}$`; tamanhos máximos: nome 150, e-mail 254, telefone 20, cargo 100 e resumo 2000. O e-mail é único por índice no banco, sem diferenciar maiúsculas de minúsculas.
 
