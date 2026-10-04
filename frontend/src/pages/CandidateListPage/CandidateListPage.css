@@ -4,6 +4,7 @@
 
 .candidate-list_table {
   width: 100%;
+  min-width: 40rem; /* no celular a tabela rola de lado, em vez de quebrar as palavras letra a letra */
   border-collapse: collapse;
 }
 

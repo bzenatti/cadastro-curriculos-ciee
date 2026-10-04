@@ -71,6 +71,8 @@ export function NewCandidatePage() {
       setFeedback({ variant: 'success', message: 'Candidato cadastrado com sucesso.' })
       setValues(EMPTY_VALUES)
       setUploadKey((current) => current + 1)
+      // o aviso fica acima do formulário: sobe até ele
+      window.scrollTo({ top: 0, behavior: 'smooth' })
     } catch (error) {
       if (error instanceof ApiError) {
         if (error.status === 409) return { email: error.message }
@@ -78,6 +80,7 @@ export function NewCandidatePage() {
       }
       const message = error instanceof ApiError ? error.message : 'Não foi possível cadastrar. Tente novamente.'
       setFeedback({ variant: 'error', message })
+      window.scrollTo({ top: 0, behavior: 'smooth' })
     } finally {
       setSaving(false)
     }
